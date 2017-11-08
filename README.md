@@ -2,6 +2,8 @@
 
 A Clojure library that makes it simple to mock out functions for testing.
 
+A fork of: https://github.com/meredydd/expect-call
+
 ## Introduction
 
 However much we would like to live in a purely functional world, we don't. Mocking is how we deal with the fact that the code we want to test is coupled with other functions that we don't want our tests to exercise.
@@ -14,7 +16,7 @@ However much we would like to live in a purely functional world, we don't. Mocki
 If you're using `lein` (which you should be), add the following dependency to your `project.clj` file:
 
 ```clojure
-[org.senatehouse/expect-call "0.1.0"]
+[whitepages/expect-call "0.1.0"]
 ```
 
 
@@ -40,7 +42,7 @@ Here's an example of a classic impure function that's a sensible design, but dif
 We can test it like so:
 
 ```clojure
-(use 'clojure.test 'org.senatehouse.expect-call)
+(use 'clojure.test 'whitepages.expect-call)
 
 (deftest check-logging
   (with-expect-call (log [:error _])

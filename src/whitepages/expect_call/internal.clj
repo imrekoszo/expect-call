@@ -1,4 +1,4 @@
-(ns org.senatehouse.expect-call.internal
+(ns whitepages.expect-call.internal
   (:require [clojure.test :refer :all]
             [clojure.core.match :refer [match]]))
 

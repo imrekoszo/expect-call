@@ -1,5 +1,5 @@
-(ns org.senatehouse.expect-call
-  (:require [org.senatehouse.expect-call.internal :refer :all]))
+(ns whitepages.expect-call
+  (:require [whitepages.expect-call.internal :refer :all]))
 
 (defmacro expect-call
   "expected-fns: (fn arg-match body...)
