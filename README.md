@@ -13,12 +13,23 @@ However much we would like to live in a purely functional world, we don't. Mocki
 
 ## Installation
 
-If you're using `lein` (which you should be), add the following dependency to your `project.clj` file:
+In `deps.edn`:
+
+```clojure
+whitepages/expect-call
+{:git/url "https://github.com/ekataglobal/expect-call"
+ :git/sha "<sha here>"}
+```
+
+### Legacy lein
+
+Note: versions above 0.1.0 aren't published via Maven, you need to use git dependencies.
+
+If you're using `lein`, add the following dependency to your `project.clj` file:
 
 ```clojure
 [whitepages/expect-call "0.1.0"]
 ```
-
 
 ## Usage
 

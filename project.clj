@@ -1,4 +1,4 @@
-(defproject whitepages/expect-call "0.3.0"
+(defproject whitepages/expect-call "0.3.0" ;; NOTE: no longer published
   :description "A Clojure library for no-fuss function mocking"
   :url "https://github.com/whitepages/expect-call"
   :license {:name "Eclipse Public License"

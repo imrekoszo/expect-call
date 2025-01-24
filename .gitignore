@@ -12,3 +12,4 @@ pom.xml
 *~
 /README.html
 /pom.xml.asc
+.cpcache/
