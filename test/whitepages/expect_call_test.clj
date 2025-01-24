@@ -1,5 +1,5 @@
 (ns whitepages.expect-call-test
-  (:require [clojure.test :as t :refer :all]
+  (:require [clojure.test :refer :all]
             [whitepages.expect-call :as sut]
             [whitepages.expect-call.internal :as internal]))
 
@@ -26,32 +26,32 @@
    loop. So it doesn't work in this case. Sadly."
   [& body]
   `(let [reported?# (atom false)]
-     (with-redefs [t/report (fn [m#]
-                              (when-not m#
-                                (throw (Exception. "(report) requires a parameter")))
-                              (swap! reported?# #(or % m#)))]
+     (with-redefs [report (fn [m#]
+                            (when-not m#
+                              (throw (Exception. "(report) requires a parameter")))
+                            (swap! reported?# #(or % m#)))]
        (try
          ~@body
          (finally
-           (cond
-             (not @reported?#) (report {:type :fail,
-                                        :expected {:type :fail},
-                                        :actual nil,
-                                        :message "Expected test to fail"})
-             (not= (:type @reported?#) :fail) (report @reported?#)
+          (cond
+           (not @reported?#) (report {:type :fail,
+                                      :expected {:type :fail},
+                                      :actual nil,
+                                      :message "Expected test to fail"})
+           (not= (:type @reported?#) :fail) (report @reported?#)
 
-             :else :ok))))
+           :else :ok))))
      @reported?#))
 
 (deftest mocks
   (let [make-mock internal/make-mock
-        mock (eval (make-mock '(#{} log [:error _] :return-value)))
-        do-mock (eval (make-mock '(#{:do} log [:error _])))]
+        mock (eval (make-mock `(#{} log [:error ~'_] :return-value)))
+        do-mock (eval (make-mock `(#{:do} log [:error ~'_])))]
 
     (is (= (mock :error "abc") :return-value))
 
     (expecting-failure
-     (mock :not-an-error "abc"))
+      (mock :not-an-error "abc"))
 
     (is (= (do-mock :error "abc") :logged) ":do mocks actually call the function")
 
@@ -68,8 +68,8 @@
 
   (testing "Basic fail"
     (expecting-failure
-     (sut/with-expect-call (log ["ERROR:" _])
-       (check-error :success "abc"))))
+      (sut/with-expect-call (log ["ERROR:" _])
+        (check-error :success "abc"))))
 
   (testing "Omitting parameters means we don't care what they are"
     (sut/with-expect-call (log)

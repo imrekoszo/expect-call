@@ -1,5 +1,5 @@
 (ns whitepages.expect-call
-  (:require [whitepages.expect-call.internal :refer :all]))
+  (:require [whitepages.expect-call.internal :refer [-expect-call]]))
 
 (defmacro expect-call
   "expected-fns: (fn arg-match body...)
