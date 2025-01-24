@@ -247,4 +247,3 @@ Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredy
 Copyright © 2012 Meredydd Luff <meredydd@senatehouse.org>
 
 Distributed under the Eclipse Public License, the same as Clojure.
-
