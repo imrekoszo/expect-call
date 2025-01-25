@@ -4,6 +4,38 @@ A Clojure library that makes it simple to mock out functions for testing.
 
 A fork of: https://github.com/meredydd/expect-call
 
+## Development on this fork
+
+### Bumping dependencies
+
+Update both `deps.edn` and `project.clj` for now.
+
+### Linting
+
+```shell
+#!/usr/bin/env fish
+
+clj-kondo --lint (clojure -Srepro -Spath) --dependencies --copy-configs
+
+clj-kondo --lint src:test:deps.edn:.clj-kondo/config.edn:resources
+```
+
+#### Working on the clj-kondo hook
+
+Use the `:hooks` alias in your editor/to start your repl. Optional: bump clj-kondo version there.
+
+### Running tests
+
+Use `lein test`. For example:
+
+```shell
+#!/usr/bin/env fish
+
+lein test && for i in (seq 6 12)
+    lein with-profile 1.$i test
+end
+```
+
 ## Introduction
 
 However much we would like to live in a purely functional world, we don't. Mocking is how we deal with the fact that the code we want to test is coupled with other functions that we don't want our tests to exercise.
@@ -245,10 +277,9 @@ Here's a sample test case, using `expect-call`:
                      ; Use a binding to capture the email body
                      (send-email ["mission-control@example.com" body]
                        (assert (re-matches #"We have liftoff at .* \d{2}:\d{2}:\d{2}.*\d{4}" body)))]
-    (launch-rocket))
+    (launch-rocket)))
 ```
 Now, wasn't that so much nicer than dependency injection?
-
 
 ## Feedback
 
