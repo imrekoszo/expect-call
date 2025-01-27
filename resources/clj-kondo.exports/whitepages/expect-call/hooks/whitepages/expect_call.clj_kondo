@@ -121,12 +121,16 @@
     (:children expected-fns-node)
     [expected-fns-node]))
 
+(defn sequential-destructuring? [node]
+  (and (api/vector-node? node)
+       (symbol-node? (first (remove api/vector-node? (iterate #(-> % :children first) node))))))
+
 (defn ->safe-arg-node
   "Replace with symbol node if it's a literal value"
   [arg-node]
-  (if (or (api/vector-node? arg-node)
-          (api/map-node? arg-node)
-          (symbol-node? arg-node))
+  (if (or (api/map-node? arg-node) ;; map destructuring doesn't seem to be allowed in expect-call
+          (symbol-node? arg-node)
+          (sequential-destructuring? arg-node))
     arg-node
     (api/token-node (gensym "_arg"))))
 
