@@ -8,20 +8,20 @@
   "Disable interception, to prevent looping if the test reporting code
    uses a function we're intercepting. Also put accurate file and line
    information into the message."
-  [msg depth]
+  [msg]
 
   (binding [*disable-interception* true]
     (report
      (merge
       (let [stack-trace (.getStackTrace (new Throwable))
-            ^StackTraceElement s (nth stack-trace (inc depth))]
+            ^StackTraceElement s (first (drop-while #(.startsWith (.getClassName ^StackTraceElement %) "whitepages.expect_call.internal$") stack-trace))]
         {:file (.getFileName s) :line (.getLineNumber s)
          :stack-trace (seq stack-trace)})
       msg))))
 
 (defn -expected-call
   "Used by (expect-call) macro. You don't call this."
-  [[more-fns calls :as state] real-fn real-fn-name args]
+  [[more-fns calls :as _state] real-fn real-fn-name args]
   (if *disable-interception*
     (apply real-fn args)
 
@@ -42,20 +42,20 @@
                                  "Wrong function called"
                                  (str "Too many calls to " real-fn-name))
                       :expected (cons ex-real-fn-name ex-args)
-                      :actual (cons real-fn-name args)} 3))))))
+                      :actual (cons real-fn-name args)}))))))
 
 (defn make-mock [[tags real-fn-name & [args & body]]]
   (let [args (or args '[& _])
         real-fn (gensym "real-fn")]
     `(let [~real-fn ~real-fn-name]
-       (fn #_~(gensym (str real-fn-name "-mock")) [& ~'myargs]
+       (fn ~(gensym (str (name real-fn-name) "-mock")) [& ~'myargs]
          (match (apply vector ~'myargs)
-           ~args (do ~@body ~@(when (:do tags) `((apply ~real-fn ~'myargs))))
-           :else (my-report {:type :fail
-                             :message "Unexpected arguments"
-                             :expected (quote ~(cons real-fn-name args))
-                             :actual (cons (quote ~real-fn-name)
-                                           ~'myargs)} 6))))))
+                ~args (do ~@body ~@(when (:do tags) `((apply ~real-fn ~'myargs))))
+                :else (my-report {:type :fail
+                                  :message "Unexpected arguments"
+                                  :expected (quote ~(cons real-fn-name args))
+                                  :actual (cons (quote ~real-fn-name)
+                                                ~'myargs)}))))))
 
 (defmacro -expect-call
   "expected-fns: (fn arg-match body...)
@@ -82,7 +82,9 @@
                                                :message ~(str real-fn " should not be called")
                                                :expected (quote (:never ~real-fn))
                                                :actual (cons (quote ~real-fn)
-                                                             args#)} 4))})));; Format: ([function closure fn-name arg-form],
+                                                             args#)}))})))
+
+           ;; Format: ([function closure fn-name arg-form],
            ;;          [function closure arg-form], ...)
            calls# (atom
                    (list
@@ -95,20 +97,20 @@
 
        (let [result#
              (with-redefs
-              ~(apply vector
-                      (let [fns (reduce (fn [set [_ real-fn]] (conj set real-fn))
-                                        #{} expected-fns)]
-                        (apply
-                         concat
-                         (for [f fns]
-                           [f `(let [f# ~f]
-                                 (fn ~(symbol (str (name f) "-mock")) [& a#]
-                                   (-expected-call ~state f# (quote ~f) a#)))]))))
+               ~(apply vector
+                       (let [fns (reduce (fn [set [_ real-fn]] (conj set real-fn))
+                                         #{} expected-fns)]
+                         (apply
+                          concat
+                          (for [f fns]
+                            [f `(let [f# ~f]
+                                  (fn ~(symbol (str (name f) "-mock")) [& a#]
+                                    (-expected-call ~state f# (quote ~f) a#)))]))))
                ~@body)]
          ;; If we haven't used up all our calls, we error out
          (when-let [[_# _# ex-fn-name# ex-args#] (first @calls#)]
            (my-report {:type :fail
                        :message (str "Function " ex-fn-name# " was not called")
                        :expected (cons ex-fn-name# ex-args#)
-                       :actual nil} 0))
+                       :actual nil}))
          result#))))

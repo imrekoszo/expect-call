@@ -4,6 +4,38 @@ A Clojure library that makes it simple to mock out functions for testing.
 
 A fork of: https://github.com/meredydd/expect-call
 
+## Development on this fork
+
+### Bumping dependencies
+
+Update both `deps.edn` and `project.clj` for now.
+
+### Linting
+
+```shell
+#!/usr/bin/env fish
+
+clj-kondo --lint (clojure -Srepro -Spath) --dependencies --copy-configs
+
+clj-kondo --lint src:test:deps.edn:.clj-kondo/config.edn:resources
+```
+
+#### Working on the clj-kondo hook
+
+Use the `:hooks` alias in your editor/to start your repl. Optional: bump clj-kondo version there.
+
+### Running tests
+
+Use `lein test`. For example:
+
+```shell
+#!/usr/bin/env fish
+
+lein test && for i in (seq 6 12)
+    lein with-profile 1.$i test
+end
+```
+
 ## Introduction
 
 However much we would like to live in a purely functional world, we don't. Mocking is how we deal with the fact that the code we want to test is coupled with other functions that we don't want our tests to exercise.
@@ -13,12 +45,23 @@ However much we would like to live in a purely functional world, we don't. Mocki
 
 ## Installation
 
-If you're using `lein` (which you should be), add the following dependency to your `project.clj` file:
+In `deps.edn`:
+
+```clojure
+whitepages/expect-call
+{:git/url "https://github.com/ekataglobal/expect-call"
+ :git/sha "<sha here>"}
+```
+
+### Legacy lein
+
+Note: versions above 0.1.0 aren't published via Maven, you need to use git dependencies.
+
+If you're using `lein`, add the following dependency to your `project.clj` file:
 
 ```clojure
 [whitepages/expect-call "0.1.0"]
 ```
-
 
 ## Usage
 
@@ -234,10 +277,9 @@ Here's a sample test case, using `expect-call`:
                      ; Use a binding to capture the email body
                      (send-email ["mission-control@example.com" body]
                        (assert (re-matches #"We have liftoff at .* \d{2}:\d{2}:\d{2}.*\d{4}" body)))]
-    (launch-rocket))
+    (launch-rocket)))
 ```
 Now, wasn't that so much nicer than dependency injection?
-
 
 ## Feedback
 
@@ -249,4 +291,3 @@ Please send feedback and pull requests to `meredydd@senatehouse.org`, or `meredy
 Copyright © 2012 Meredydd Luff <meredydd@senatehouse.org>
 
 Distributed under the Eclipse Public License, the same as Clojure.
-
