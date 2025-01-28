@@ -13,7 +13,7 @@
   (when (= a :error)
     (log "ERROR:" (pr-str b))))
 
-(defn destructuring [x])
+(defn destructuring [_x])
 
 (defmacro expecting-failure
   "Execute body, expecting it to report a test failure.
@@ -114,7 +114,16 @@
       (destructuring [[a b]] (is (= a b)))
       (destructuring (mapv inc [3 4]))))
 
-    (testing "with arg checking agains binding"
+    (sut/with-expect-call
+     (destructuring [[a [b [c :foo]]]] (is (= a b c)))
+     (destructuring [1 [1 [1 :foo]]]))
+
+    ;; :as not supported
+    #_(sut/with-expect-call
+     (destructuring [[a b :as c]] (is (= [4 4] c)))
+     (destructuring (mapv inc [3 3])))
+
+    (testing "with arg checking against binding"
       (let [foo :foo]
         (sut/with-expect-call
          (destructuring [[foo bar]] (is (= foo bar)))
@@ -123,11 +132,25 @@
         (expecting-failure
          (sut/with-expect-call
           (destructuring [[foo bar]] (is (= foo bar)))
+          (destructuring [:bar :bar])))
+
+        (sut/with-expect-call
+         (destructuring [[foo :bar]])
+         (destructuring [:foo :bar]))
+
+        (expecting-failure
+         (sut/with-expect-call
+          (destructuring [[foo :bar]])
+          (destructuring [:foo :foo])))
+
+        (expecting-failure
+         (sut/with-expect-call
+          (destructuring [[foo :bar]])
           (destructuring [:bar :bar])))))
 
     ;; map destructuring not allowed
     #_(sut/with-expect-call
-       (destructuring [[{foo :foo bar :bar}]] (is (= foo bar)))
+       (destructuring [{foo :foo}] (is (= foo 1)))
        (destructuring [{:foo 1 :bar 1}]))
     #_(expecting-failure
        (sut/with-expect-call

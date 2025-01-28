@@ -121,28 +121,75 @@
     (:children expected-fns-node)
     [expected-fns-node]))
 
-(defn sequential-destructuring? [node]
-  (and (api/vector-node? node)
-       (symbol-node? (first (remove api/vector-node? (iterate #(-> % :children first) node))))))
+(defn with-ignore-unresolved  [node]
+  (vary-meta node assoc :clj-kondo/ignore [:unresolved-symbol :unresolved-var]))
 
-(defn ->safe-arg-node
-  "Replace with symbol node if it's a literal value"
-  [arg-node]
-  (if (or (api/map-node? arg-node) ;; map destructuring doesn't seem to be allowed in expect-call
-          (symbol-node? arg-node)
-          (sequential-destructuring? arg-node))
-    arg-node
-    (api/token-node (gensym "_arg"))))
+(letfn
+ [(analyze-rf
+    ([] {:args-node [] :symbol-nodes [] :value-nodes []})
+    ([acc] (update acc :args-node api/vector-node))
+    ([acc arg-node]
+     (cond
+       (symbol-node? arg-node)
+       (merge-with
+        conj acc
+        {:args-node arg-node
+         :symbol-nodes (-> arg-node with-ignore-unresolved)})
 
-(defn redefed-fn [{:keys [children]}]
-  (let [[fn-name-node args-node & body]
-        (into [] (drop-while api/keyword-node?) children)]
+       (api/vector-node? arg-node)
+       (merge-with
+        into acc
+        (update (analyze-argvec- arg-node) :args-node vector))
+
+       (or (api/string-node? arg-node)
+           (api/keyword-node? arg-node))
+       (update acc :args-node conj (api/token-node (gensym "_arg")))
+
+       :else
+       (merge-with
+        conj acc
+        {:args-node (api/token-node (gensym "_arg"))
+         :value-nodes arg-node}))))
+  (analyze-argvec- [args-node]
+    (cond
+      (nil? args-node)
+      {:args-node
+       (api/vector-node [(api/token-node '&) (api/token-node (gensym "_more"))])}
+
+      (empty? (:children args-node))
+      {:args-node args-node}
+
+      :else
+      (analyze-rf (reduce analyze-rf (analyze-rf) (:children args-node)))))]
+  (defn analyze-argvec
+    "Returns an argvec that is safe to use as a binding vector,
+    symbols found during analysis, and literal values found during analysis"
+    [args-node]
+    (analyze-argvec- args-node)))
+
+(defn redefed-fn
+  "Transforms expected fn spec into a pair usable with with-redefs.
+  As it might replace nodes in the argvec, it tries to add statements (prn)
+  that result in registering usage and further analysis for the replaced nodes"
+  [{:keys [children]}]
+  (let [[fn-name-node args-node & body] (into [] (drop-while api/keyword-node?) children)
+        {:keys [args-node #_symbol-nodes value-nodes]} (analyze-argvec args-node)]
     [fn-name-node
      (api/list-node
-      (list*
-       (api/token-node 'fn)
-       (api/vector-node (mapv ->safe-arg-node (:children args-node)))
-       body))]))
+      (->
+       [(api/token-node 'do)]
+       (cond->
+        ;; register usage of symbols that are both in the argvec and are valid just outside
+        ;; check after https://github.com/clj-kondo/clj-kondo/issues/2472
+        #_#_(seq symbol-nodes)
+        (conj (-> (api/list-node (list* (api/token-node `prn) symbol-nodes)) with-ignore-unresolved))
+
+        ;; register use of replaced value nodes so they can be linted too
+        (seq value-nodes)
+        (conj (api/list-node (list* (api/token-node `prn) value-nodes))))
+
+       ;; actual fn definition to have body linted
+       (conj (api/list-node (list* (api/token-node 'fn) args-node body)))))]))
 
 (defn ->with-redefs [expect-call-node]
   (let [[expectations-node & body] (rest (:children expect-call-node))]
