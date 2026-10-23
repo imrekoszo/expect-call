@@ -5,7 +5,10 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/core.match "1.1.1"]]
   :profiles
-  {;; these support running tests for different Clojure versions:
+  {;; clj-kondo needs Clojure 1.11, so the hook tests only run in :dev, which with-profile replaces
+   :dev {:dependencies [[clj-kondo/clj-kondo "2026.10.26"]]
+         :test-paths ["test-hooks"]}
+   ;; these support running tests for different Clojure versions:
    ;; lein with-profile 1.10 test
    ;; also see https://github.com/technomancy/leiningen/blob/master/doc/PROFILES.md#merging:~:text=Another%20use%20of%20profiles%20is%20to%20test%20against%20various%20sets%20of%20dependencies
    :1.6 {:dependencies [[org.clojure/clojure "1.6.0"]]}
