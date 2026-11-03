@@ -5,6 +5,13 @@
   :hooks {:deps
           {clj-kondo/clj-kondo
            {:git/url "https://github.com/clj-kondo/clj-kondo.git"
-            :git/tag "v2025.01.16"
-            :git/sha "3994c84"}}
-          :paths ["resources/clj-kondo.exports/org.senatehouse/expect-call"]}}}
+            :git/tag "v2026.10.26"
+            :git/sha "2473c53"}}
+          :paths ["resources/clj-kondo.exports/org.senatehouse/expect-call"]
+          :ns-aliases {hooks hooks.org.senatehouse.expect-call}}
+  :lint {:deps
+         {clj-kondo/clj-kondo
+          {:git/url "https://github.com/clj-kondo/clj-kondo.git"
+           :git/tag "v2026.10.26"
+           :git/sha "2473c53"}}
+         :main-opts ["-m" "clj-kondo.main" "--parallel" "--lint"]}}}
